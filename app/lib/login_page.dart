@@ -27,7 +27,7 @@ class LoginState extends State<LoginPage> {
             padding: EdgeInsets.only(top:10 ,bottom: 10),
             child: TextButton(
               onPressed: ()=> setState(() {
-                showDialog(context: context, builder: (context) => dialogBuilder(
+                showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
                   context: context,
                   onActionPressed: () {
                     print("login, email: ${tmpEmail}, password: ${tmpPassword}");
@@ -61,7 +61,7 @@ class LoginState extends State<LoginPage> {
             padding: EdgeInsets.only(top:10, left: 10, right: 40, bottom: 10),
             child: TextButton(
               onPressed: ()=> setState(() {
-                showDialog(context: context, builder: (context) => dialogBuilder(
+                showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
                   context: context,
                   onActionPressed: () {
                     print("signUp, email: $tmpEmail, password: $tmpPassword");
