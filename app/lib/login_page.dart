@@ -1,17 +1,31 @@
-import 'dart:js';
-
+import 'user.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class LoginPage extends StatefulWidget {
 
   @override
-  State<StatefulWidget> createState() => LoginState();
+  State<StatefulWidget> createState() => LoginPageState();
 }
 
-class LoginState extends State<LoginPage> {
+class LoginPageState extends State<LoginPage> {
 
-  String tmpEmail = "", tmpPassword = "";
+  String tmpName = "", tmpEmail = "", tmpPassword = "";
+  var isSignedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    User.instance.checkAuthState((state) {
+      print("checking authentication state...");
+      if(isSignedIn != state) setState(() {
+        isSignedIn = state;
+        print("auth state changed to: ${state == true? "signed in" : "signed out"}"
+        );
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,15 +40,14 @@ class LoginState extends State<LoginPage> {
           Padding(
             padding: EdgeInsets.only(top:10 ,bottom: 10),
             child: TextButton(
-              onPressed: ()=> setState(() {
-                showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
+              onPressed: ()=> showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
                   context: context,
                   onActionPressed: () {
-                    print("login, email: ${tmpEmail}, password: ${tmpPassword}");
+                    User.instance.signIn(tmpEmail, tmpPassword);
+                    Navigator.pop(context);
                   },
                   actionText: "Login"
-                ));
-              }), 
+              )),
               child: Text(
                 '  Log in  ',
                 style: GoogleFonts.notoSans(),
@@ -60,15 +73,15 @@ class LoginState extends State<LoginPage> {
           Padding(
             padding: EdgeInsets.only(top:10, left: 10, right: 40, bottom: 10),
             child: TextButton(
-              onPressed: ()=> setState(() {
-                showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
+              onPressed: ()=> showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
                   context: context,
-                  onActionPressed: () {
-                    print("signUp, email: $tmpEmail, password: $tmpPassword");
-                  },
-                  actionText: "Continue",
-                ));
-              }),
+                  userNameTextField: true,
+                  onActionPressed: () async {
+                      User.instance.createAccount(tmpName, tmpEmail, tmpPassword);
+                      Navigator.pop(context);
+                    },
+                  actionText: "Sign up",
+              )),
               child: Text(
                 '  Sign up  ',
                 style: GoogleFonts.notoSans(),
@@ -93,13 +106,20 @@ class LoginState extends State<LoginPage> {
           )
         ],
       ),
-      body: Container(
-        color: Colors.white,
-      ),
+      body: isSignedIn == true ? Column(
+        children: [
+          Text(
+          "name: ${User.instance.name}\n"
+          "email: ${User.instance.email}"
+          ),
+          TextButton(onPressed: ()=> User.instance.signOut(), child: Text("sign out")),
+          TextButton(onPressed: ()=> User.instance.deleteAccount(), child: Text("Delete"))
+        ],
+      ) : Text("Signed out")
     );
   }
 
-  AlertDialog dialogBuilder({required BuildContext context, required void Function() onActionPressed, required String actionText}) {
+  AlertDialog dialogBuilder({required BuildContext context, required void Function() onActionPressed, required String actionText, bool userNameTextField = false}) {
     return AlertDialog(title: Row(children: [
       Text('Welcome to Pinterest'),
       Spacer(),
@@ -112,6 +132,12 @@ class LoginState extends State<LoginPage> {
       content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if(userNameTextField == true) TextField(
+                onChanged: (value) => setState(()=>tmpName = value),
+                decoration: InputDecoration(
+                  hintText: "username"
+                ),
+              ),
               TextField(
                 onChanged: (value) => setState(()=>tmpEmail = value),
                 decoration: InputDecoration(
