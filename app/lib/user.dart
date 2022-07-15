@@ -1,3 +1,4 @@
+import 'package:app/error_message_handler.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -16,7 +17,7 @@ class User {
   
   Future<void> setPassword(String password) => FirebaseAuth.instance.currentUser!.updatePassword(password);
 
-  void createAccount(String name, String email, String password) async {
+  Future<String?> createAccount(String name, String email, String password) async {
     try {
       await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email, password: password
@@ -25,28 +26,29 @@ class User {
       await setName(name);
       
     } on FirebaseAuthException catch(e) {
-      print(e.code);
+      return Future.value(ErrorMessageHandler(e.code).message);
     }
+    return null;
   }
 
   void deleteAccount() {
     try {
-
       FirebaseAuth.instance.currentUser!.delete();
     } on FirebaseAuthException catch(e) {
       print(e.code);
     }
   }
 
-  void signIn(String email, String password) async {
+  Future<String?> signIn(String email, String password) async {
     try {
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password
       );
     } on FirebaseAuthException catch(e) {
-      print(e.code);
+      return Future.value(ErrorMessageHandler(e.code).message);
     }
+    return null;
   }
 
   void signOut() {
