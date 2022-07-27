@@ -11,7 +11,8 @@ class LoginPage extends StatefulWidget {
 class LoginPageState extends State<LoginPage> {
 
   String tmpName = "", tmpEmail = "", tmpPassword = "";
-  var isSignedIn = false;
+  bool isSignedIn = false;
+  String? errMsg;
 
   @override
   void initState() {
@@ -42,9 +43,9 @@ class LoginPageState extends State<LoginPage> {
             child: TextButton(
               onPressed: ()=> showDialog(context: context, barrierDismissible: false, builder: (context) => dialogBuilder(
                   context: context,
-                  onActionPressed: () {
-                    User.instance.signIn(tmpEmail, tmpPassword);
-                    Navigator.pop(context);
+                  onActionPressed: () async {
+                    errMsg = await User.instance.signIn(tmpEmail, tmpPassword);
+                    if(errMsg == null) Navigator.pop(context);
                   },
                   actionText: "Login"
               )),
@@ -77,9 +78,9 @@ class LoginPageState extends State<LoginPage> {
                   context: context,
                   userNameTextField: true,
                   onActionPressed: () async {
-                      User.instance.createAccount(tmpName, tmpEmail, tmpPassword);
-                      Navigator.pop(context);
-                    },
+                      errMsg = await User.instance.createAccount(tmpName, tmpEmail, tmpPassword);
+                      if(errMsg == null) Navigator.pop(context);
+                  },
                   actionText: "Sign up",
               )),
               child: Text(
@@ -119,12 +120,15 @@ class LoginPageState extends State<LoginPage> {
     );
   }
 
-  AlertDialog dialogBuilder({required BuildContext context, required void Function() onActionPressed, required String actionText, bool userNameTextField = false}) {
-    return AlertDialog(title: Row(children: [
+  Widget dialogBuilder({required BuildContext context, required void Function() onActionPressed, required String actionText, bool userNameTextField = false}) {
+    return StatefulBuilder(builder: (context, setState) => AlertDialog(title: Row(children: [
       Text('Welcome to Pinterest'),
       Spacer(),
       IconButton(
-        onPressed: ()=> Navigator.pop(context),
+        onPressed: () {
+          Navigator.pop(context); 
+          setState(()=> errMsg = null);
+        },
         icon: Icon(Icons.close),
         splashRadius: 0.1,
       )]),
@@ -136,22 +140,29 @@ class LoginPageState extends State<LoginPage> {
                 onChanged: (value) => setState(()=>tmpName = value),
                 decoration: InputDecoration(
                   hintText: "username"
-                ),
-              ),
+              )),
               TextField(
                 onChanged: (value) => setState(()=>tmpEmail = value),
                 decoration: InputDecoration(
                   hintText: "email"
-                ),
-              ),
+              )),
               TextField(
                 onChanged: (value) => setState(()=> tmpPassword = value),
                 decoration: InputDecoration(
                   hintText: "password"
-                ),
-              )
+              )),
+              (errMsg != null)? Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: Text(
+                  errMsg!,
+              )) : Padding(padding: EdgeInsets.only(top: 10), child: Text('')) 
       ]),
-      actions: [TextButton(onPressed: onActionPressed, child: Text(actionText))]
-    );
+      actions: [TextButton(onPressed: (){
+          onActionPressed(); 
+          setState((){});
+        }, 
+        child: Text(actionText)
+      )]
+    ));
   }
 }
